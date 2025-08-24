@@ -8,6 +8,8 @@ python -m venv venv
 .\venv\Scripts\activate
 # On macOS/Linux:
 source venv/bin/activate
+
+
 Finally, install all the necessary libraries with one simple command:pip install -r requirements.txt
 #remember you should see and install manually all the libraries3. Running the DemonstrationWith everything installed, you can now run the main script. This will kick off the full demonstration using synthetic data.python main.py
 The script will:Build the U-Net model architecture.Generate a fresh set of synthetic cell images for training.Train the model for 25 epochs (you'll see the progress live!).Evaluate the trained model on a test set.Pick a random test image and display a beautiful 4-panel plot showing the segmentation results.Show you the training history graphs for loss and accuracy.📂 Project StructureThe codebase is organized into logical modules to make it easy to understand and build upon..
