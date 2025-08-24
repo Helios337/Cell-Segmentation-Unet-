@@ -1,0 +1,10 @@
+tensorflow
+numpy
+opencv-python
+matplotlib
+requests
+scikit-learn
+scikit-image
+scipy
+pandas
+tqdm
