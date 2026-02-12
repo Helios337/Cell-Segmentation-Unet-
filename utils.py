@@ -1,60 +1,46 @@
-import os
-import cv2
 import numpy as np
-import pandas as pd
-from tqdm import tqdm
+from skimage import measure, morphology, feature
+from skimage.segmentation import watershed
+from scipy import ndimage
 
-def process_bbbc_images(image_dir, annotation_dir=None, img_size=(256, 256)):
-    """Processes real BBBC images and annotations with correct interpolation."""
-    valid_exts = ('.jpg', '.png', '.tif', '.tiff')
-    image_files = [f for f in sorted(os.listdir(image_dir)) if f.lower().endswith(valid_exts)]
-    
-    processed_images = []
-    processed_masks = []
-    
-    for img_file in tqdm(image_files, desc="Processing BBBC images"):
-        img_path = os.path.join(image_dir, img_file)
-        img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+def count_cells_watershed(pred_mask, threshold=0.5):
+    """
+    Counts cells using Watershed algorithm.
+    Args:
+        pred_mask (np.array): Prediction mask (H, W) or (H, W, 1)
+        threshold (float): Binarization threshold
+    Returns:
+        count (int): Number of cells
+        labels (np.array): Labeled mask
+    """
+    if len(pred_mask.shape) == 3:
+        pred_mask = pred_mask[:, :, 0]
         
-        if img is None:
-            continue
-            
-        # Handle grayscale vs RGB
-        if len(img.shape) == 2:
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-        elif len(img.shape) == 3 and img.shape[2] == 3:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            
-        img = cv2.resize(img, img_size)
-        img = img.astype(np.float32) / 255.0
-        processed_images.append(img)
-        
-        if annotation_dir:
-            mask_path = os.path.join(annotation_dir, img_file)
-            # Some datasets have different extensions for masks, handle if needed
-            if not os.path.exists(mask_path):
-                 # Try replacing extension if mask name differs only by ext
-                 pre, _ = os.path.splitext(img_file)
-                 mask_path = os.path.join(annotation_dir, pre + ".png")
+    # 1. Threshold
+    binary = (pred_mask > threshold).astype(np.uint8)
+    
+    # 2. Noise Removal
+    clean = morphology.remove_small_objects(binary.astype(bool), min_size=20)
+    
+    # 3. Distance Transform
+    distance = ndimage.distance_transform_edt(clean)
+    
+    # 4. Find Peaks
+    coords = feature.peak_local_max(distance, min_distance=5, labels=clean)
+    mask = np.zeros(distance.shape, dtype=bool)
+    mask[tuple(coords.T)] = True
+    markers = measure.label(mask)
+    
+    # 5. Watershed
+    labels = watershed(-distance, markers, mask=clean)
+    
+    return len(np.unique(labels)) - 1, labels
 
-            if os.path.exists(mask_path):
-                mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-                # CRITICAL: Use Nearest Neighbor for masks to avoid interpolating 0 and 1 into 0.5
-                mask = cv2.resize(mask, img_size, interpolation=cv2.INTER_NEAREST)
-                mask = (mask > 0).astype(np.float32)
-                processed_masks.append(mask)
-            else:
-                processed_masks.append(np.zeros(img_size, dtype=np.float32))
-                
-    if annotation_dir:
-        return np.array(processed_images), np.expand_dims(np.array(processed_masks), axis=-1)
-    return np.array(processed_images)
-
-def save_results_to_csv(image_names, cell_counts, output_path="cell_counts.csv"):
-    results_df = pd.DataFrame({
-        'image_name': image_names,
-        'predicted_cell_count': cell_counts,
-        'timestamp': pd.Timestamp.now()
-    })
-    results_df.to_csv(output_path, index=False)
-    print(f"\nResults saved to {output_path}")
+def calculate_iou(y_true, y_pred, threshold=0.5):
+    """Calculates Intersection over Union."""
+    y_pred_bin = (y_pred > threshold)
+    y_true_bin = (y_true > threshold)
+    
+    intersection = np.sum(y_true_bin * y_pred_bin)
+    union = np.sum(y_true_bin) + np.sum(y_pred_bin) - intersection
+    return (intersection + 1e-6) / (union + 1e-6)
