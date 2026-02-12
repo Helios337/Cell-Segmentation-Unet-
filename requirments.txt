@@ -1,10 +1,11 @@
-tensorflow
 numpy
-opencv-python
+opencv-python-headless
 matplotlib
-requests
+seaborn
+tensorflow
 scikit-learn
 scikit-image
 scipy
-pandas
 tqdm
+requests
+pandas
