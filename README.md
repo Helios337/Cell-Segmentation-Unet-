@@ -1,42 +1,21 @@
 ```markdown
 # 🔬 Cell Segmentation & Counting with Deep U-Net
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8%2B-blue)
-![TensorFlow](https://img.shields.io/badge/tensorflow-2.x-orange)
-
 A robust, industry-standard Deep Learning pipeline for segmenting and counting cell nuclei in biomedical images. Trained on the **2018 Data Science Bowl (BBBC038)** dataset, this project leverages a custom Deep U-Net architecture to handle complex biological textures and overlapping cells.
 
 
 
 ## 🌟 Features
 
-* **Real Data Pipeline:** Automatically downloads and parses the ~85MB BBBC038 dataset (Data Science Bowl 2018).
-* **Deep U-Net Architecture:** A 5-level U-Net with Batch Normalization and He Initialization for stable training on textured biomedical images.
-* **Advanced Post-Processing:** Uses Watershed algorithm with distance transform to separate touching cells (crucial for accurate counting).
-* **Industry-Standard Evaluation:** Includes Bland-Altman plots and IoU distribution analysis to validate scientific accuracy.
-* **Data Augmentation:** Real-time rotation, flipping, and zooming to prevent overfitting.
-
-## 📂 Project Structure
-
-```text
-cell-segmentation-unet/
-│
-├── data/                   # Dataset storage (auto-downloaded)
-├── src/                    # Source code
-│   ├── __init__.py
-│   ├── data_loader.py      # BBBC038 downloader & parser
-│   ├── model.py            # Deep U-Net architecture
-│   └── utils.py            # Metrics & Counting logic
-│
-├── train.py                # Main training script
-├── evaluate.py             # Evaluation & Visualization script
-├── requirements.txt        # Dependencies
-└── README.md               # Documentation
+* Real Data Pipeline: Automatically downloads and parses the ~85MB BBBC038 dataset (Data Science Bowl 2018).
+* Deep U-Net Architecture: A 5-level U-Net with Batch Normalization and He Initialization for stable training on textured biomedical images.
+* Advanced Post-Processing: Uses Watershed algorithm with distance transform to separate touching cells (crucial for accurate counting).
+* Industry-Standard Evaluation: Includes Bland-Altman plots and IoU distribution analysis to validate scientific accuracy.
+* Data Augmentation: Real-time rotation, flipping, and zooming to prevent overfitting.
 
 ```
 
-## 🚀 How to Use
+## How to Use
 
 Follow these steps to set up the project and train your own model.
 
@@ -66,7 +45,7 @@ pip install -r requirements.txt
 
 To start the training pipeline, run the `train.py` script. This script handles the entire workflow:
 
-1. **Downloads** the BBBC038 dataset automatically (if not already present).
+1. **Downloads** the BBBC038 dataset.
 2. **Preprocesses** the images and merges mask files.
 3. **Augments** the data in real-time.
 4. **Trains** the Deep U-Net model.
