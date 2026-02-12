@@ -1,5 +1,3 @@
-### 📄 `README.md`
-
 ```markdown
 # 🔬 Cell Segmentation & Counting with Deep U-Net
 
