@@ -1,5 +1,3 @@
-Here is the updated `README.md` file with a dedicated **"How to Use"** section. I have also included a placeholder for a diagram to visualize the architecture, which is standard for GitHub repositories of this nature.
-
 ### 📄 `README.md`
 
 ```markdown
