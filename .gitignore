@@ -1,21 +1,18 @@
-# Python cache
+# Ignore the huge dataset folder
+data/
+data_bbbc038/
+
+# Ignore python compiled files
 __pycache__/
 *.pyc
 
-# Virtual environment
+# Ignore virtual environments
 venv/
-env/
+.env
 
-# IDE folders
+# Ignore Mac system files
+.DS_Store
+
+# Ignore IDE settings (VS Code, PyCharm)
 .vscode/
 .idea/
-
-# Data folder (downloaded by your script)
-data/
-
-# [cite_start]Saved model files (your script creates 'best_model.h5') [cite: 14]
-*.h5
-*.hdf5
-
-# [cite_start]Output files (like the CSV you might generate) [cite: 45]
-*.csv
