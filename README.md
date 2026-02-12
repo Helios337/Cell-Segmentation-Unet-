@@ -1,11 +1,11 @@
 ```markdown
-# 🔬 Cell Segmentation & Counting with Deep U-Net
+# Cell Segmentation & Counting with Deep U-Net
 
 A robust, industry-standard Deep Learning pipeline for segmenting and counting cell nuclei in biomedical images. Trained on the **2018 Data Science Bowl (BBBC038)** dataset, this project leverages a custom Deep U-Net architecture to handle complex biological textures and overlapping cells.
 
 
 
-## 🌟 Features
+## Features
 
 * Real Data Pipeline: Automatically downloads and parses the ~85MB BBBC038 dataset (Data Science Bowl 2018).
 * Deep U-Net Architecture: A 5-level U-Net with Batch Normalization and He Initialization for stable training on textured biomedical images.
@@ -73,7 +73,7 @@ python evaluate.py
 
 
 
-## 📊 Dataset
+## Dataset
 
 The project uses the **2018 Data Science Bowl (BBBC038)** dataset, hosted by the Broad Institute.
 
@@ -81,7 +81,7 @@ The project uses the **2018 Data Science Bowl (BBBC038)** dataset, hosted by the
 * **Ground Truth:** High-quality masks where each nucleus is annotated.
 * **Preprocessing:** The `RealBiologicalLoader` class merges individual mask files into a single binary map for semantic segmentation.
 
-## 🧠 Model Architecture
+## Model Architecture
 
 The model is a **Deep U-Net** optimized for biomedical segmentation:
 
@@ -90,7 +90,7 @@ The model is a **Deep U-Net** optimized for biomedical segmentation:
 * **Decoder:** 4 upsampling blocks with skip connections to preserve spatial resolution.
 * **Output:** Sigmoid activation for pixel-wise probability.
 
-## 📈 Results & Evaluation
+## Results & Evaluation
 
 We will use the gold standard  **Bland-Altman Analysis** to validate counting accuracy.
 
@@ -100,7 +100,7 @@ We will use the gold standard  **Bland-Altman Analysis** to validate counting ac
 | **Counting Bias** | < 1.0 | Average difference between Pred & Ground Truth counts |
 | **Pixel Accuracy** | > 98% | Accuracy of background/foreground classification |
 
-## 🛠️ Requirements
+## Requirements
 
 * Python 3.8+
 * TensorFlow 2.x
@@ -109,7 +109,7 @@ We will use the gold standard  **Bland-Altman Analysis** to validate counting ac
 * Matplotlib / Seaborn
 * Pandas / Numpy
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -119,7 +119,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📜 License
+## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
