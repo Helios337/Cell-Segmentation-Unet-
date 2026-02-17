@@ -1,34 +1,52 @@
-Cell Segmentation and Counting using Deep U-Net
+# Cell Segmentation & Counting using Deep U-Net
 
-This project implements a Deep U-Net model to segment and count cell nuclei in microscopy images. The model is trained on the 2018 Data Science Bowl (BBBC038) dataset and includes preprocessing, training, post-processing, and evaluation.
+This project implements a Deep U-Net model for automatic segmentation and counting of cell nuclei in microscopy images. The model is trained on the 2018 Data Science Bowl (BBBC038) dataset and includes preprocessing, augmentation, post-processing, and evaluation.
 
-Overview
+The goal is to build a complete end-to-end deep learning pipeline for biomedical image segmentation and accurate cell counting.
 
-The pipeline performs:
+---
 
-Automatic dataset download
+## Project Workflow
 
-Image and mask preprocessing
+The pipeline performs the following steps:
 
-Deep U-Net training
+1. Automatically downloads and prepares the BBBC038 dataset  
+2. Merges individual mask files into binary segmentation maps  
+3. Applies real-time data augmentation (rotation, flipping, zoom)  
+4. Trains a Deep U-Net model  
+5. Uses watershed post-processing to separate overlapping cells  
+6. Evaluates segmentation and counting performance  
 
-Watershed-based separation of overlapping cells
+---
 
-Counting and performance evaluation
+## Model Architecture
 
-Model
+The model is a 5-level Deep U-Net:
 
-4-level Encoder-Decoder U-Net
+- **Encoder:** Conv2D → BatchNorm → ReLU → MaxPooling  
+- **Bottleneck:** 512 filters with Dropout (0.3)  
+- **Decoder:** Upsampling with skip connections  
+- **Output:** Sigmoid activation for pixel-wise prediction  
 
-Batch Normalization
+This architecture preserves spatial resolution while capturing high-level biological features.
 
-Dropout in bottleneck
+---
 
-Sigmoid output for binary segmentation
+## Post-Processing (For Accurate Counting)
 
-Post-processing uses distance transform + watershed to separate touching cells.
+Segmentation masks often contain touching cells.  
+To improve counting accuracy:
 
-Installation
+- Distance Transform is applied  
+- Local maxima are detected  
+- Watershed algorithm separates clustered nuclei  
+- Connected components are counted  
+
+---
+
+## Installation
+
+```bash
 git clone https://github.com/yourusername/cell-segmentation-unet.git
 cd cell-segmentation-unet
 
@@ -36,39 +54,3 @@ python -m venv venv
 source venv/bin/activate    # Windows: venv\Scripts\activate
 
 pip install -r requirements.txt
-
-Training
-python train.py
-
-
-Output:
-
-best_model.keras
-
-Saved test data (.npy)
-
-Evaluation
-python evaluate.py
-
-
-Generates:
-
-IoU histogram
-
-Bland-Altman plot
-
-Prediction overlays
-
-Requirements
-
-Python 3.8+
-
-TensorFlow 2.x
-
-OpenCV
-
-Scikit-Image
-
-NumPy
-
-Matplotlib
