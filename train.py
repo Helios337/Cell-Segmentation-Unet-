@@ -24,7 +24,7 @@ def main():
     X, y = loader.load_dataset(img_size=IMG_SIZE)
     
     if X is None:
-        print("❌ Dataset loading failed.")
+        print("Dataset loading failed.")
         return
 
     # 2. Split
@@ -33,7 +33,7 @@ def main():
     # Save test set for evaluation script
     np.save("X_test.npy", X_test)
     np.save("y_test.npy", y_test)
-    print("✅ Test set saved for evaluation.")
+    print("Test set saved for evaluation.")
 
     # 3. Augmentation
     data_gen_args = dict(rotation_range=90, width_shift_range=0.1, height_shift_range=0.1,
@@ -55,7 +55,7 @@ def main():
         keras.callbacks.ModelCheckpoint('best_model.keras', save_best_only=True)
     ]
     
-    print("🚀 Starting Training...")
+    print("Starting Training...")
     model.fit(
         train_gen,
         steps_per_epoch=len(X_train) // BATCH_SIZE,
@@ -63,7 +63,7 @@ def main():
         epochs=EPOCHS,
         callbacks=callbacks
     )
-    print("✅ Training Complete. Model saved as 'best_model.keras'")
+    print("Training Complete. Model saved as 'best_model.keras'")
 
 if __name__ == "__main__":
     main()
