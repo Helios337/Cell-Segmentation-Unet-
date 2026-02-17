@@ -9,22 +9,22 @@ from src.utils import count_cells_watershed, calculate_iou
 plt.style.use('seaborn-v0_8-whitegrid')
 
 def main():
-    print("🔄 Loading Model and Test Data...")
+    print("Loading Model and Test Data...")
     try:
         model = keras.models.load_model('best_model.keras')
         X_test = np.load("X_test.npy")
         y_test = np.load("y_test.npy")
     except Exception as e:
-        print(f"❌ Error loading files: {e}")
+        print(f"Error loading files: {e}")
         print("Did you run train.py first?")
         return
 
-    print("📊 Generating Predictions...")
+    print("Generating Predictions...")
     preds = model.predict(X_test, verbose=1)
 
     gt_counts, pred_counts, ious = [], [], []
 
-    print("🧮 Calculating Metrics...")
+    print("Calculating Metrics...")
     for i in tqdm(range(len(X_test))):
         pc, _ = count_cells_watershed(preds[i])
         gc, _ = count_cells_watershed(y_test[i])
@@ -66,7 +66,7 @@ def main():
     
     plt.tight_layout()
     plt.savefig("evaluation_report.png")
-    print("✅ Evaluation complete. Report saved as 'evaluation_report.png'")
+    print("Evaluation complete. Report saved as 'evaluation_report.png'")
 
 if __name__ == "__main__":
     main()
