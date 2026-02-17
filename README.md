@@ -1,126 +1,74 @@
-```markdown
-# Cell Segmentation & Counting with Deep U-Net
+Cell Segmentation and Counting using Deep U-Net
 
-A robust, industry-standard Deep Learning pipeline for segmenting and counting cell nuclei in biomedical images. Trained on the **2018 Data Science Bowl (BBBC038)** dataset, this project leverages a custom Deep U-Net architecture to handle complex biological textures and overlapping cells.
+This project implements a Deep U-Net model to segment and count cell nuclei in microscopy images. The model is trained on the 2018 Data Science Bowl (BBBC038) dataset and includes preprocessing, training, post-processing, and evaluation.
 
+Overview
 
+The pipeline performs:
 
-## Features
+Automatic dataset download
 
-* Real Data Pipeline: Automatically downloads and parses the ~85MB BBBC038 dataset (Data Science Bowl 2018).
-* Deep U-Net Architecture: A 5-level U-Net with Batch Normalization and He Initialization for stable training on textured biomedical images.
-* Advanced Post-Processing: Uses Watershed algorithm with distance transform to separate touching cells (crucial for accurate counting).
-* Industry-Standard Evaluation: Includes Bland-Altman plots and IoU distribution analysis to validate scientific accuracy.
-* Data Augmentation: Real-time rotation, flipping, and zooming to prevent overfitting.
+Image and mask preprocessing
 
-```
+Deep U-Net training
 
-## How to Use
+Watershed-based separation of overlapping cells
 
-Follow these steps to set up the project and train your own model.
+Counting and performance evaluation
 
-### 1. Installation
+Model
 
-First, clone the repository and navigate into the project directory:
+4-level Encoder-Decoder U-Net
 
-```bash
-git clone [https://github.com/yourusername/cell-segmentation-unet.git](https://github.com/yourusername/cell-segmentation-unet.git)
+Batch Normalization
+
+Dropout in bottleneck
+
+Sigmoid output for binary segmentation
+
+Post-processing uses distance transform + watershed to separate touching cells.
+
+Installation
+git clone https://github.com/yourusername/cell-segmentation-unet.git
 cd cell-segmentation-unet
 
-```
-
-Create a virtual environment (recommended) and install the required dependencies:
-
-```bash
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate    # Windows: venv\Scripts\activate
 
-# Install dependencies
 pip install -r requirements.txt
 
-```
-
-### 2. Training the Model
-
-To start the training pipeline, run the `train.py` script. This script handles the entire workflow:
-
-1. **Downloads** the BBBC038 dataset.
-2. **Preprocesses** the images and merges mask files.
-3. **Augments** the data in real-time.
-4. **Trains** the Deep U-Net model.
-
-```bash
+Training
 python train.py
 
-```
 
-* **Output:** The script will save the best-performing model to `best_model.keras` and the test dataset to `.npy` files for evaluation.
+Output:
 
-### 3. Evaluating Performance
+best_model.keras
 
-Once training is complete, you can generate a comprehensive performance report using `evaluate.py`. This script loads the trained model and the test data to produce industry-standard metrics.
+Saved test data (.npy)
 
-```bash
+Evaluation
 python evaluate.py
 
-```
 
-* **Output:** This will generate `evaluation_report.png`, containing:
-* **IoU Histogram:** Distribution of segmentation quality.
-* **Bland-Altman Plot:** Analysis of counting bias and agreement.
-* **Visual Overlays:** Qualitative comparison of predictions vs. ground truth.
+Generates:
 
+IoU histogram
 
+Bland-Altman plot
 
-## Dataset
+Prediction overlays
 
-The project uses the **2018 Data Science Bowl (BBBC038)** dataset, hosted by the Broad Institute.
+Requirements
 
-* **Content:** Diverse microscopy images (fluorescence, histology, brightfield).
-* **Ground Truth:** High-quality masks where each nucleus is annotated.
-* **Preprocessing:** The `RealBiologicalLoader` class merges individual mask files into a single binary map for semantic segmentation.
+Python 3.8+
 
-## Model Architecture
+TensorFlow 2.x
 
-The model is a **Deep U-Net** optimized for biomedical segmentation:
+OpenCV
 
-* **Encoder:** 4 downsampling blocks (Conv2D -> BatchNorm -> ReLU -> MaxPool).
-* **Bottleneck:** 512 filters with Dropout (0.3) to capture high-level features.
-* **Decoder:** 4 upsampling blocks with skip connections to preserve spatial resolution.
-* **Output:** Sigmoid activation for pixel-wise probability.
+Scikit-Image
 
-## Results & Evaluation
+NumPy
 
-We will use the gold standard  **Bland-Altman Analysis** to validate counting accuracy.
-
-| Metric | Value (Approx) | Description |
-| --- | --- | --- |
-| **Mean IoU** | 0.85+ | Intersection over Union (Segmentation Quality) |
-| **Counting Bias** | < 1.0 | Average difference between Pred & Ground Truth counts |
-| **Pixel Accuracy** | > 98% | Accuracy of background/foreground classification |
-
-## Requirements
-
-* Python 3.8+
-* TensorFlow 2.x
-* OpenCV
-* Scikit-Image
-* Matplotlib / Seaborn
-* Pandas / Numpy
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
+Matplotlib
