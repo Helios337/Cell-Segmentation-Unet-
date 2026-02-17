@@ -17,10 +17,10 @@ class RealBiologicalLoader:
         extract_path = os.path.join(self.base_dir, "stage1_train")
         
         if os.path.exists(extract_path):
-            print(f"✅ Data found in {extract_path}")
+            print(f"Data found in {extract_path}")
             return extract_path
             
-        print("⬇️ Downloading BBBC038 Dataset...")
+        print("Downloading BBBC038 Dataset...")
         try:
             r = requests.get(url, stream=True)
             if r.status_code != 200:
@@ -30,23 +30,24 @@ class RealBiologicalLoader:
                 for chunk in tqdm(r.iter_content(chunk_size=8192), desc="Downloading"):
                     f.write(chunk)
             
-            print("📦 Extracting dataset...")
+            print("Extracting dataset...")
             with zipfile.ZipFile(zip_path, 'r') as z:
                 z.extractall(extract_path)
             return extract_path
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"Error: {e}")
             return None
 
     def load_dataset(self, img_size=(128, 128)):
         """Parses images and merges mask files."""
         data_path = self.download_data()
-        if not data_path: return None, None
+        if not data_path: 
+            return None, None
         
         image_ids = next(os.walk(data_path))[1]
         X, y = [], []
         
-        print(f"🔄 Processing {len(image_ids)} images...")
+        print(f"Processing {len(image_ids)} images...")
         
         for id_ in tqdm(image_ids):
             path = os.path.join(data_path, id_)
@@ -54,7 +55,8 @@ class RealBiologicalLoader:
             # Load Image
             img_path = os.path.join(path, 'images', id_ + '.png')
             img = cv2.imread(img_path)
-            if img is None: continue
+            if img is None: 
+                continue
             img = cv2.resize(img, img_size)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             
@@ -66,7 +68,8 @@ class RealBiologicalLoader:
                 for mask_file in os.listdir(mask_dir):
                     m_path = os.path.join(mask_dir, mask_file)
                     mask_ = cv2.imread(m_path, cv2.IMREAD_GRAYSCALE)
-                    if mask_ is None: continue
+                    if mask_ is None: 
+                        continue
                     mask_ = cv2.resize(mask_, img_size, interpolation=cv2.INTER_NEAREST)
                     masks = np.maximum(masks, mask_)
             
