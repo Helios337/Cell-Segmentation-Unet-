@@ -1,126 +1,120 @@
-```markdown
 # Cell Segmentation & Counting with Deep U-Net
 
-A robust, industry-standard Deep Learning pipeline for segmenting and counting cell nuclei in biomedical images. Trained on the **2018 Data Science Bowl (BBBC038)** dataset, this project leverages a custom Deep U-Net architecture to handle complex biological textures and overlapping cells.
-
-
+A production-focused deep learning pipeline for segmenting and counting cell nuclei in biomedical images (BBBC038 / Data Science Bowl 2018), now with reproducible performance benchmarking, profiling, and regression guardrails.
 
 ## Features
 
-* Real Data Pipeline: Automatically downloads and parses the ~85MB BBBC038 dataset (Data Science Bowl 2018).
-* Deep U-Net Architecture: A 5-level U-Net with Batch Normalization and He Initialization for stable training on textured biomedical images.
-* Advanced Post-Processing: Uses Watershed algorithm with distance transform to separate touching cells (crucial for accurate counting).
-* Industry-Standard Evaluation: Includes Bland-Altman plots and IoU distribution analysis to validate scientific accuracy.
-* Data Augmentation: Real-time rotation, flipping, and zooming to prevent overfitting.
+- Deep U-Net training for semantic nuclei segmentation
+- Watershed-based counting with **high_accuracy** and **fast** post-processing modes
+- Reproducible training/evaluation artifacts (`training_summary.json`, `evaluation_metrics.json`)
+- Multi-trial benchmark runner with variance and acceptance checks
+- Profiling across data loading, preprocessing, training, inference, and post-processing
+- Unit tests for metrics, model variants, loader integrity, and performance aggregation
 
-```
-
-## How to Use
-
-Follow these steps to set up the project and train your own model.
-
-### 1. Installation
-
-First, clone the repository and navigate into the project directory:
+## Installation
 
 ```bash
-git clone [https://github.com/yourusername/cell-segmentation-unet.git](https://github.com/yourusername/cell-segmentation-unet.git)
-cd cell-segmentation-unet
-
-```
-
-Create a virtual environment (recommended) and install the required dependencies:
-
-```bash
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate
 pip install -r requirements.txt
-
 ```
 
-### 2. Training the Model
-
-To start the training pipeline, run the `train.py` script. This script handles the entire workflow:
-
-1. **Downloads** the BBBC038 dataset.
-2. **Preprocesses** the images and merges mask files.
-3. **Augments** the data in real-time.
-4. **Trains** the Deep U-Net model.
+## Training
 
 ```bash
-python train.py
-
+python train.py --model-variant baseline --epochs 20 --batch-size 16 --img-size 128
 ```
 
-* **Output:** The script will save the best-performing model to `best_model.keras` and the test dataset to `.npy` files for evaluation.
-
-### 3. Evaluating Performance
-
-Once training is complete, you can generate a comprehensive performance report using `evaluate.py`. This script loads the trained model and the test data to produce industry-standard metrics.
+Optional performance controls:
 
 ```bash
-python evaluate.py
-
+python train.py --model-variant light --mixed-precision --max-samples 512 --output-dir runs/light_exp
 ```
 
-* **Output:** This will generate `evaluation_report.png`, containing:
-* **IoU Histogram:** Distribution of segmentation quality.
-* **Bland-Altman Plot:** Analysis of counting bias and agreement.
-* **Visual Overlays:** Qualitative comparison of predictions vs. ground truth.
+### Model variants
 
+- `baseline`: original quality-focused default
+- `light`: faster separable-conv variant
+- `tiny`: smallest/faster variant for constrained setups
 
+## Evaluation
 
-## Dataset
+```bash
+python evaluate.py --output-dir . --postprocess-mode high_accuracy
+```
 
-The project uses the **2018 Data Science Bowl (BBBC038)** dataset, hosted by the Broad Institute.
+Fast mode:
 
-* **Content:** Diverse microscopy images (fluorescence, histology, brightfield).
-* **Ground Truth:** High-quality masks where each nucleus is annotated.
-* **Preprocessing:** The `RealBiologicalLoader` class merges individual mask files into a single binary map for semantic segmentation.
+```bash
+python evaluate.py --output-dir . --postprocess-mode fast
+```
 
-## Model Architecture
+Artifacts:
 
-The model is a **Deep U-Net** optimized for biomedical segmentation:
+- `evaluation_report.png`
+- `evaluation_metrics.json`
 
-* **Encoder:** 4 downsampling blocks (Conv2D -> BatchNorm -> ReLU -> MaxPool).
-* **Bottleneck:** 512 filters with Dropout (0.3) to capture high-level features.
-* **Decoder:** 4 upsampling blocks with skip connections to preserve spatial resolution.
-* **Output:** Sigmoid activation for pixel-wise probability.
+## Reproducible Benchmarking
 
-## Results & Evaluation
+Run frozen multi-trial baseline/candidate benchmarks:
 
-We will use the gold standard  **Bland-Altman Analysis** to validate counting accuracy.
+```bash
+python benchmark.py --trials 3 --epochs 20 --model-variant baseline --output-dir benchmark_runs/baseline
+```
 
-| Metric | Value (Approx) | Description |
-| --- | --- | --- |
-| **Mean IoU** | 0.85+ | Intersection over Union (Segmentation Quality) |
-| **Counting Bias** | < 1.0 | Average difference between Pred & Ground Truth counts |
-| **Pixel Accuracy** | > 98% | Accuracy of background/foreground classification |
+Candidate run:
 
-## Requirements
+```bash
+python benchmark.py --trials 3 --epochs 20 --model-variant light --mixed-precision \
+  --output-dir benchmark_runs/light \
+  --baseline-report benchmark_runs/baseline/benchmark_report.json
+```
 
-* Python 3.8+
-* TensorFlow 2.x
-* OpenCV
-* Scikit-Image
-* Matplotlib / Seaborn
-* Pandas / Numpy
+Benchmark report includes:
 
-## Contributing
+- Hardware/software metadata
+- Per-trial metrics and variance
+- Prioritized bottlenecks by average wall-clock contribution
+- Acceptance decision (quality + speed criteria)
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Acceptance Criteria (default)
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Candidate must satisfy all:
+
+- Mean IoU drop ≤ 0.01
+- BinaryIoU drop ≤ 0.005
+- Counting bias increase ≤ 1.0
+- Train epoch speedup ≥ 1.10x
+- Inference latency speedup ≥ 1.10x
+
+## Tests
+
+Run validation suite:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Test coverage includes:
+
+- IoU/counting correctness and edge cases
+- Model output-shape correctness across architecture variants
+- Data-loader dataset integrity and value-range checks
+- Trial aggregation and acceptance-check logic
+
+## CI Guardrails
+
+- Quick smoke: unit tests on push/PR
+- Periodic benchmark workflow: scheduled and manual execution for regression checks
+
+## Core Files
+
+- `train.py` – optimized training pipeline and profiling output
+- `evaluate.py` – evaluation metrics, latency/throughput, count-agreement spread
+- `benchmark.py` – reproducible multi-trial benchmarking and acceptance checks
+- `performance.py` – benchmarking schema, aggregation, acceptance evaluation
+- `utils.py` – IoU and post-processing modes
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
+MIT

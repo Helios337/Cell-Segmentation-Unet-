@@ -1,46 +1,62 @@
 import numpy as np
-from skimage import measure, morphology, feature
-from skimage.segmentation import watershed
 from scipy import ndimage
+from skimage import feature, measure, morphology
+from skimage.segmentation import watershed
 
-def count_cells_watershed(pred_mask, threshold=0.5):
+
+POSTPROCESS_PRESETS = {
+    "high_accuracy": {"threshold": 0.5, "min_size": 20, "min_distance": 5, "use_watershed": True},
+    "fast": {"threshold": 0.55, "min_size": 30, "min_distance": 8, "use_watershed": False},
+}
+
+
+def _resolve_preset(mode, threshold, min_size, min_distance):
+    if mode not in POSTPROCESS_PRESETS:
+        raise ValueError(f"Unknown mode '{mode}'. Valid: {list(POSTPROCESS_PRESETS.keys())}")
+
+    preset = POSTPROCESS_PRESETS[mode].copy()
+    if threshold is not None:
+        preset["threshold"] = threshold
+    if min_size is not None:
+        preset["min_size"] = min_size
+    if min_distance is not None:
+        preset["min_distance"] = min_distance
+    return preset
+
+
+def count_cells_watershed(pred_mask, threshold=0.5, min_size=20, min_distance=5, mode="high_accuracy"):
     """
-    Counts cells using Watershed algorithm.
-    Args:
-        pred_mask (np.array): Prediction mask (H, W) or (H, W, 1)
-        threshold (float): Binarization threshold
-    Returns:
-        count (int): Number of cells
-        labels (np.array): Labeled mask
+    Counts cells from a prediction mask.
+    Supports 'high_accuracy' (watershed) and 'fast' (connected-components) presets.
     """
     if len(pred_mask.shape) == 3:
         pred_mask = pred_mask[:, :, 0]
-        
-    # 1. Threshold
-    binary = (pred_mask > threshold).astype(np.uint8)
-    
-    # 2. Noise Removal
-    clean = morphology.remove_small_objects(binary.astype(bool), min_size=20)
-    
-    # 3. Distance Transform
+
+    cfg = _resolve_preset(mode=mode, threshold=threshold, min_size=min_size, min_distance=min_distance)
+
+    binary = (pred_mask > cfg["threshold"]).astype(np.uint8)
+    clean = morphology.remove_small_objects(binary.astype(bool), min_size=cfg["min_size"])
+
+    if not cfg["use_watershed"]:
+        labels = measure.label(clean)
+        return int(labels.max()), labels
+
     distance = ndimage.distance_transform_edt(clean)
-    
-    # 4. Find Peaks
-    coords = feature.peak_local_max(distance, min_distance=5, labels=clean)
+    coords = feature.peak_local_max(distance, min_distance=cfg["min_distance"], labels=clean)
     mask = np.zeros(distance.shape, dtype=bool)
-    mask[tuple(coords.T)] = True
+    if coords.size > 0:
+        mask[tuple(coords.T)] = True
     markers = measure.label(mask)
-    
-    # 5. Watershed
+
     labels = watershed(-distance, markers, mask=clean)
-    
     return len(np.unique(labels)) - 1, labels
+
 
 def calculate_iou(y_true, y_pred, threshold=0.5):
     """Calculates Intersection over Union."""
-    y_pred_bin = (y_pred > threshold)
-    y_true_bin = (y_true > threshold)
-    
+    y_pred_bin = y_pred > threshold
+    y_true_bin = y_true > threshold
+
     intersection = np.sum(y_true_bin * y_pred_bin)
     union = np.sum(y_true_bin) + np.sum(y_pred_bin) - intersection
     return (intersection + 1e-6) / (union + 1e-6)
