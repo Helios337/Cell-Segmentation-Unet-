@@ -107,6 +107,20 @@ Test coverage includes:
 - Quick smoke: unit tests on push/PR
 - Periodic benchmark workflow: scheduled and manual execution for regression checks
 
+## Notebooks
+
+- `notebooks/results_analysis_plotly.ipynb`
+  - Plotly graphs for baseline vs candidate comparison (speed, quality, bottlenecks, Pareto view).
+- `notebooks/logical_changes_explained.ipynb`
+  - Explains what changed and why, focused on logical design decisions.
+
+To populate notebook charts, run benchmark artifacts first:
+
+```bash
+python benchmark.py --trials 1 --epochs 1 --model-variant baseline --max-samples 64 --output-dir benchmark_runs/baseline
+python benchmark.py --trials 1 --epochs 1 --model-variant light --mixed-precision --max-samples 64 --output-dir benchmark_runs/candidate --baseline-report benchmark_runs/baseline/benchmark_report.json
+```
+
 ## Core Files
 
 - `train.py` – optimized training pipeline and profiling output
