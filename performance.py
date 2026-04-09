@@ -142,9 +142,9 @@ def evaluate_acceptance(
     b = baseline.get("means", baseline)
     c = candidate.get("means", candidate)
 
-    def safe_ratio(numerator: float, denominator: float) -> float:
+    def safe_ratio(numerator: float, denominator: float):
         if denominator <= 0:
-            return 1.0
+            return None
         return numerator / denominator
 
     iou_drop = float(b.get("mean_iou", 0.0)) - float(c.get("mean_iou", 0.0))
@@ -158,8 +158,8 @@ def evaluate_acceptance(
         "quality_iou_preserved": iou_drop <= criteria.max_iou_drop,
         "quality_binary_iou_preserved": acc_drop <= criteria.max_accuracy_drop,
         "counting_bias_within_tolerance": bias_increase <= criteria.max_count_bias_increase,
-        "train_speed_target_met": train_speedup >= criteria.min_speedup_train_epoch,
-        "inference_speed_target_met": infer_speedup >= criteria.min_speedup_inference_latency,
+        "train_speed_target_met": (train_speedup is not None and train_speedup >= criteria.min_speedup_train_epoch),
+        "inference_speed_target_met": (infer_speedup is not None and infer_speedup >= criteria.min_speedup_inference_latency),
     }
 
     return {

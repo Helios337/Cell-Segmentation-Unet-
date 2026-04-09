@@ -209,9 +209,11 @@ def train(config: TrainConfig):
     val_loss = history.history.get("val_loss", [])
     val_iou = history.history.get("val_iou", [])
 
-    best_epoch_idx = int(np.argmin(val_loss)) if val_loss else 0
+    best_epoch_idx = int(np.argmin(val_loss)) if val_loss else None
     time_to_best_val_loss = (
-        float(sum(time_history.epoch_times[: best_epoch_idx + 1])) if time_history.epoch_times else 0.0
+        float(sum(time_history.epoch_times[: best_epoch_idx + 1]))
+        if (time_history.epoch_times and best_epoch_idx is not None)
+        else None
     )
 
     time_to_target_iou = None

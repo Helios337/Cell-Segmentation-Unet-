@@ -9,9 +9,13 @@ import requests
 from tqdm import tqdm
 
 
+DEFAULT_DOWNLOAD_TIMEOUT_SECONDS = 120
+
+
 class RealBiologicalLoader:
-    def __init__(self, base_dir: str = "./data"):
+    def __init__(self, base_dir: str = "./data", download_timeout: int = DEFAULT_DOWNLOAD_TIMEOUT_SECONDS):
         self.base_dir = base_dir
+        self.download_timeout = download_timeout
         os.makedirs(self.base_dir, exist_ok=True)
 
     def download_data(self, profile: Optional[Dict[str, float]] = None) -> Optional[str]:
@@ -29,7 +33,7 @@ class RealBiologicalLoader:
         print("⬇️ Downloading BBBC038 Dataset...")
         try:
             t0 = time.perf_counter()
-            r = requests.get(url, stream=True, timeout=120)
+            r = requests.get(url, stream=True, timeout=self.download_timeout)
             if r.status_code != 200:
                 raise ConnectionError(f"Failed to download. Status: {r.status_code}")
 

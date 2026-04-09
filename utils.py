@@ -4,9 +4,15 @@ from skimage import feature, measure, morphology
 from skimage.segmentation import watershed
 
 
+"""Post-processing presets tuned for accuracy-speed tradeoffs.
+
+- high_accuracy: lower threshold and watershed-based separation for touching nuclei.
+- fast: stricter threshold + connected-components for lower latency.
+"""
+
 POSTPROCESS_PRESETS = {
-    "high_accuracy": {"threshold": 0.5, "min_size": 20, "min_distance": 5, "use_watershed": True},
-    "fast": {"threshold": 0.55, "min_size": 30, "min_distance": 8, "use_watershed": False},
+    "high_accuracy": {"threshold": 0.5, "area_threshold": 20, "min_distance": 5, "use_watershed": True},
+    "fast": {"threshold": 0.55, "area_threshold": 30, "min_distance": 8, "use_watershed": False},
 }
 
 
@@ -18,9 +24,11 @@ def _resolve_preset(mode, threshold, min_size, min_distance):
     if threshold is not None:
         preset["threshold"] = threshold
     if min_size is not None:
-        preset["min_size"] = min_size
+        preset["area_threshold"] = min_size
     if min_distance is not None:
         preset["min_distance"] = min_distance
+    if preset["area_threshold"] <= 0 or preset["min_distance"] <= 0:
+        raise ValueError("area_threshold and min_distance must be positive")
     return preset
 
 
@@ -28,6 +36,7 @@ def count_cells_watershed(pred_mask, threshold=0.5, min_size=20, min_distance=5,
     """
     Counts cells from a prediction mask.
     Supports 'high_accuracy' (watershed) and 'fast' (connected-components) presets.
+    If no local maxima are detected in high_accuracy mode, no watershed markers are seeded.
     """
     if len(pred_mask.shape) == 3:
         pred_mask = pred_mask[:, :, 0]
@@ -35,7 +44,7 @@ def count_cells_watershed(pred_mask, threshold=0.5, min_size=20, min_distance=5,
     cfg = _resolve_preset(mode=mode, threshold=threshold, min_size=min_size, min_distance=min_distance)
 
     binary = (pred_mask > cfg["threshold"]).astype(np.uint8)
-    clean = morphology.remove_small_objects(binary.astype(bool), min_size=cfg["min_size"])
+    clean = morphology.area_opening(binary.astype(bool), area_threshold=cfg["area_threshold"])
 
     if not cfg["use_watershed"]:
         labels = measure.label(clean)

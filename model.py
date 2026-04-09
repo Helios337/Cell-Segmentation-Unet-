@@ -14,15 +14,31 @@ def build_deep_unet(
     """Builds a configurable U-Net model."""
     inputs = keras.Input(shape=input_shape)
 
-    conv_layer = layers.SeparableConv2D if use_separable else layers.Conv2D
+    def create_conv_layer(filters):
+        if use_separable:
+            return layers.SeparableConv2D(
+                filters,
+                3,
+                padding="same",
+                depthwise_initializer="he_normal",
+                pointwise_initializer="he_normal",
+                use_bias=False,
+            )
+        return layers.Conv2D(
+            filters,
+            3,
+            padding="same",
+            kernel_initializer="he_normal",
+            use_bias=False,
+        )
 
     def conv_block(x, filters, block_dropout=0.1):
-        x = conv_layer(filters, 3, padding="same", kernel_initializer="he_normal", use_bias=False)(x)
+        x = create_conv_layer(filters)(x)
         x = layers.BatchNormalization()(x)
         x = layers.Activation("relu")(x)
         if block_dropout:
             x = layers.Dropout(block_dropout)(x)
-        x = conv_layer(filters, 3, padding="same", kernel_initializer="he_normal", use_bias=False)(x)
+        x = create_conv_layer(filters)(x)
         x = layers.BatchNormalization()(x)
         x = layers.Activation("relu")(x)
         return x

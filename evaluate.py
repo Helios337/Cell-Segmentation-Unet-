@@ -101,8 +101,8 @@ def main():
         "threshold": args.threshold,
         "metrics": {
             "mean_iou": float(np.mean(ious)),
-            "binary_iou": float(np.mean(ious)),
             "counting_bias": float(mean_diff),
+            # 3.92 = 2 * 1.96, width of 95% Bland-Altman limits of agreement.
             "count_agreement_spread": float(3.92 * std),
             "inference_latency_ms": float(inference_latency_ms),
             "throughput_images_per_sec": float(throughput),

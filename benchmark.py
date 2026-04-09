@@ -26,9 +26,14 @@ def parse_args():
 
 
 def run_command(cmd: List[str], cwd: str) -> None:
-    completed = subprocess.run(cmd, cwd=cwd, check=False)
-    if completed.returncode != 0:
-        raise RuntimeError(f"Command failed ({completed.returncode}): {' '.join(cmd)}")
+    try:
+        completed = subprocess.run(cmd, cwd=cwd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"Command failed ({e.returncode}): {' '.join(cmd)}\nSTDOUT:\n{e.stdout}\nSTDERR:\n{e.stderr}"
+        ) from e
+    if completed.stdout:
+        print(completed.stdout)
 
 
 def _read_json(path: Path) -> Dict[str, Any]:
@@ -57,7 +62,7 @@ def _collect_trial_metrics(training: Dict[str, Any], evaluation: Dict[str, Any],
         "throughput_images_per_sec": e.get("throughput_images_per_sec", 0.0),
         "model_size_mb": t.get("model_size_mb", 0.0),
         "mean_iou": e.get("mean_iou", 0.0),
-        "binary_iou": e.get("binary_iou", 0.0),
+        "binary_iou": t.get("binary_iou", 0.0),
         "counting_bias": e.get("counting_bias", 0.0),
         "count_agreement_spread": e.get("count_agreement_spread", 0.0),
         "bottlenecks": profiling,

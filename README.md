@@ -117,4 +117,4 @@ Test coverage includes:
 
 ## License
 
-MIT
+Distributed under the MIT License. See `LICENSE` for more information.
