@@ -1,0 +1,54 @@
+name: Performance Benchmark
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 0"
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Baseline benchmark
+        run: |
+          python benchmark.py \
+            --trials 1 \
+            --epochs 1 \
+            --model-variant baseline \
+            --max-samples 64 \
+            --output-dir benchmark_runs/baseline
+
+      - name: Candidate benchmark
+        run: |
+          python benchmark.py \
+            --trials 1 \
+            --epochs 1 \
+            --model-variant light \
+            --mixed-precision \
+            --max-samples 64 \
+            --output-dir benchmark_runs/candidate \
+            --baseline-report benchmark_runs/baseline/benchmark_report.json
+
+      - name: Upload benchmark artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-runs
+          path: benchmark_runs/

@@ -9,3 +9,4 @@ scipy
 tqdm
 requests
 pandas
+plotly
