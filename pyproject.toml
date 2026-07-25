@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cell-segmentation-unet"
+version = "1.1.0"
+description = "U-Net based cell segmentation and counting for biomedical microscopy images"
+readme = "README.md"
+authors = [{ name = "Aditya Gupta", email = "akg1082004@gmail.com" }]
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "tensorflow>=2.13.0",
+    "numpy>=1.24.0",
+    "opencv-python>=4.8.0",
+    "matplotlib>=3.7.0",
+    "scikit-learn>=1.2.0",
+    "scikit-image>=0.21.0",
+    "scipy>=1.10.0",
+    "requests>=2.28.0",
+    "tqdm>=4.65.0",
+    "pandas>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Helios337/Cell-Segmentation-Unet-"
+Repository = "https://github.com/Helios337/Cell-Segmentation-Unet-"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "ruff>=0.1.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
