@@ -195,7 +195,7 @@ class CellSegmentationTool:
                     factor=0.5, patience=3, monitor="val_loss"
                 ),
                 keras.callbacks.ModelCheckpoint(
-                    "best_model_phase1.h5", save_best_only=True,
+                    "best_model_phase1.keras", save_best_only=True,
                     monitor="val_loss",
                 ),
             ]
@@ -219,7 +219,7 @@ class CellSegmentationTool:
                     factor=0.5, patience=5, monitor="val_loss"
                 ),
                 keras.callbacks.ModelCheckpoint(
-                    "best_model.h5", save_best_only=True, monitor="val_loss"
+                    "best_model_phase2.keras", save_best_only=True, monitor="val_loss"
                 ),
             ]
             remaining_epochs = epochs - freeze_encoder_epochs
@@ -243,7 +243,7 @@ class CellSegmentationTool:
                     factor=0.5, patience=5, monitor="val_loss"
                 ),
                 keras.callbacks.ModelCheckpoint(
-                    "best_model.h5", save_best_only=True, monitor="val_loss"
+                    "best_model.keras", save_best_only=True, monitor="val_loss"
                 ),
             ]
             self.history = self.model.fit(
@@ -270,7 +270,7 @@ class CellSegmentationTool:
         for layer in self.model.layers:
             layer.trainable = True
 
-    def save_checkpoint_to_drive(self, filepath="best_model.h5",
+    def save_checkpoint_to_drive(self, filepath="best_model.keras",
                                   drive_path=None):
         """Save model checkpoint to Google Drive for persistence.
 
@@ -279,7 +279,7 @@ class CellSegmentationTool:
             drive_path: Destination path on Google Drive.
         """
         if drive_path is None:
-            drive_path = "/content/drive/MyDrive/cell_segmentation/best_model.h5"
+            drive_path = "/content/drive/MyDrive/cell_segmentation/best_model.keras"
         try:
             from google.colab import drive
             drive.mount("/content/drive")
@@ -348,7 +348,7 @@ class CellSegmentationTool:
         """
         binary_mask = (mask > threshold).astype(np.uint8)
         cleared_mask = morphology.remove_small_objects(
-            binary_mask.astype(bool), max_size=min_size
+            binary_mask.astype(bool), min_size=min_size
         )
         distance = ndimage.distance_transform_edt(cleared_mask)
         coords = morphology.local_maxima(distance)

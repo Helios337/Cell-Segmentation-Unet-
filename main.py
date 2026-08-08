@@ -176,7 +176,7 @@ def run_training(args):
 
     if args.save_to_drive:
         cell_tool.save_checkpoint_to_drive(
-            filepath="best_model.h5",
+            filepath="best_model.keras",
             drive_path=args.drive_path,
         )
 
@@ -224,7 +224,7 @@ def main():
     parser.add_argument("--save-to-drive", action="store_true", default=False,
                         help="Save model to Google Drive")
     parser.add_argument("--drive-path", type=str,
-                        default="/content/drive/MyDrive/cell_segmentation/best_model.h5",
+                        default="/content/drive/MyDrive/cell_segmentation/best_model.keras",
                         help="Google Drive path for model save")
     parser.add_argument("--n-samples", type=int, default=200,
                         help="Number of synthetic samples (for demo mode)")
