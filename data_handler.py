@@ -29,7 +29,7 @@ class BBBCDataLoader:
 
         loader = BBBCDataLoader(dataset_name="BBBC038")
         loader.download_dataset(save_dir="./data")
-        X, y = loader.load_real_data(image_dir="./data/stage1_train")
+        X, y = loader.load_real_data(image_dir="./data")
     """
 
     def __init__(self, dataset_name="BBBC038"):
