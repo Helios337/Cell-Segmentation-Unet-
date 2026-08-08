@@ -1,5 +1,5 @@
 """
-End-to-end cell segmentation pipeline using U-Net with ResNet34 encoder.
+End-to-end cell segmentation pipeline using U-Net with ResNet50 encoder.
 
 Trains on real fluorescence microscopy data (BBBC038/BBBC039),
 evaluates with comprehensive metrics, and visualizes results.
@@ -78,9 +78,9 @@ def run_training(args):
     print("Cell Segmentation Tool - U-Net Training")
     print("=" * 60)
 
-    print("\n[1/6] Building U-Net model with ResNet34 encoder ...")
+    print("\n[1/6] Building U-Net model with ResNet50 encoder ...")
     cell_tool = CellSegmentationTool(
-        input_shape=tuple(args.img_size + (3,)),
+        input_shape=tuple(args.img_size) + (3,),
         pretrained=args.pretrained,
     )
     cell_tool.build_unet()
@@ -206,7 +206,7 @@ def main():
     parser.add_argument("--lr-phase2", type=float, default=1e-4,
                         help="Learning rate for phase 2")
     parser.add_argument("--pretrained", action="store_true", default=True,
-                        help="Use pretrained ResNet34 encoder")
+                        help="Use pretrained ResNet50 encoder")
     parser.add_argument("--no-pretrained", dest="pretrained", action="store_false",
                         help="Use randomly initialized encoder")
     parser.add_argument("--augment", action="store_true", default=True,
