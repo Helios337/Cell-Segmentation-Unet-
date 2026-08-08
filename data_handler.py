@@ -133,8 +133,8 @@ class BBBCDataLoader:
             img = img.astype(np.float32) / 255.0
             images.append(img)
             mask = np.zeros(img_size, dtype=np.float32)
-            img_parent = os.path.dirname(img_path)
-            masks_dir = os.path.join(img_parent, "masks")
+            sample_dir = os.path.dirname(os.path.dirname(img_path))
+            masks_dir = os.path.join(sample_dir, "masks")
             if os.path.isdir(masks_dir):
                 mask_files = [
                     f for f in os.listdir(masks_dir)
@@ -167,11 +167,11 @@ class BBBCDataLoader:
                             mask = np.maximum(mask, (m > 0).astype(np.float32))
             masks.append(mask)
         if annotation_dir or any(
-            os.path.isdir(os.path.join(os.path.dirname(f), "masks"))
+            os.path.isdir(os.path.join(os.path.dirname(os.path.dirname(f)), "masks"))
             for f in image_files
         ):
             return np.array(images), np.expand_dims(np.array(masks), axis=-1)
-        return np.array(images)
+        return np.array(images), np.expand_dims(np.array(masks), axis=-1)
 
     def load_synthetic_data(self, n_samples=100, img_size=(256, 256)):
         """Generate synthetic cell-like images for demonstration."""
