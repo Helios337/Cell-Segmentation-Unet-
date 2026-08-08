@@ -1,0 +1,49 @@
+model:
+  input_shape: [256, 256, 3]
+  encoder: resnet34
+  pretrained: true
+  freeze_encoder_epochs: 5
+
+training:
+  epochs_phase1: 10
+  epochs_phase2: 20
+  batch_size: 8
+  learning_rate_phase1: 0.001
+  learning_rate_phase2: 0.0001
+  early_stopping_patience: 10
+  reduce_lr_patience: 5
+  reduce_lr_factor: 0.5
+
+data:
+  source: bbbc038
+  img_size: [256, 256]
+  augment: true
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+
+post_processing:
+  threshold: 0.5
+  min_size: 50
+  optimize_thresholds: true
+  threshold_grid: [0.3, 0.4, 0.5, 0.6, 0.7]
+  min_size_grid: [10, 20, 30, 50, 100]
+
+evaluation:
+  metrics:
+    - iou
+    - dice
+    - precision
+    - recall
+    - f1
+    - count_mae
+
+checkpoint:
+  save_to_drive: false
+  drive_path: "/content/drive/MyDrive/cell_segmentation"
+  filename: best_model.h5
+
+misc:
+  mixed_precision: true
+  gradient_accumulation_steps: 2
+  tta: true

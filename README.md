@@ -2,84 +2,139 @@
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue?logo=python)](https://www.python.org/)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13-FF6F00?logo=tensorflow)](https://www.tensorflow.org/)
-[![CI](https://github.com/Helios337/Cell-Segmentation-Unet-/actions/workflows/ci.yml/badge.svg)](https://github.com/Helios337/Cell-Segmentation-Unet-/actions)
+[![CI](https://github.com/Helios337/Cell-Segmentation/actions/workflows/ci.yml/badge.svg)](https://github.com/Helios337/Cell-Segmentation/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Automatically detect, segment, and count cells in microscopy images using a **U-Net** deep learning model with watershed-based separation of overlapping cells.
+Automatically detect, segment, and count nuclei in fluorescence microscopy images using a **U-Net** deep learning model with ResNet50 pretrained encoder and watershed-based separation of overlapping cells.
 
 ## Key Features
 
-- **U-Net Architecture** — Classic encoder-decoder with skip connections, proven for biomedical segmentation
-- **Watershed Post-Processing** — Separates touching/overlapping cells for accurate counting
-- **Synthetic Data Generation** — Generate realistic cell-like images on-the-fly for instant demo
+- **U-Net with ResNet50 Encoder** — Pretrained on ImageNet for strong feature extraction
+- **Two-Phase Training** — Frozen encoder first, then full fine-tuning
+- **Focal Loss** — Handles extreme class imbalance in cell segmentation
+- **Watershed Post-Processing** — Separates touching/overlapping nuclei for accurate counting
+- **Test-Time Augmentation** — Averages predictions across flips for robust results
 - **BBBC Dataset Support** — Download real microscopy data from the Broad Bioimage Benchmark Collection
-- **Visual Report** — 4-panel output showing original, ground truth, prediction, and labeled count
+- **Post-Processing Optimization** — Grid search over threshold and min_size for best cell count accuracy
+- **Comprehensive Evaluation** — IoU, Dice, Precision, Recall, F1, and Cell Count MAE
+- **Google Drive Checkpointing** — Save models persistently on Colab
 
 ## Quick Start
 
+### Local Setup
+
 ```bash
-git clone https://github.com/Helios337/Cell-Segmentation-Unet-.git
-cd Cell-Segmentation-Unet-
+git clone https://github.com/Helios337/Cell-Segmentation.git
+cd Cell-Segmentation
 python3 -m venv venv && source venv/bin/activate
 pip install -e ".[dev]"
 
-# Run full demo with synthetic data
-python main.py
+# Train on BBBC038 (nuclei segmentation)
+python main.py --data-source BBBC038
+```
+
+### Colab Setup
+
+1. Open a new Colab notebook and connect to a GPU runtime (Runtime → Change runtime type → GPU).
+2. Run the setup script:
+
+```bash
+!git clone https://github.com/Helios337/Cell-Segmentation.git
+%cd Cell-Segmentation
+!python colab_setup.py
+```
+
+Or set up manually:
+
+```bash
+!git clone https://github.com/Helios337/Cell-Segmentation.git
+%cd Cell-Segmentation
+!pip install -e .
+!python main.py --mode train --data-source BBBC038 --epochs-phase1 10 --epochs-phase2 20
+```
+
+## CLI Usage
+
+```bash
+# Train on BBBC038 nuclei data
+python main.py --mode train --data-source BBBC038
+
+# Train with custom hyperparameters
+python main.py --data-source BBBC038 --epochs-phase1 10 --epochs-phase2 20 \
+  --batch-size 8 --lr-phase1 0.001 --lr-phase2 0.0001
+
+# Evaluate a trained model
+python main.py --mode eval --data-source BBBC038
+
+# Predict on a single image
+python main.py --mode predict --data-source BBBC038
+
+# With test-time augmentation
+python main.py --data-source BBBC038 --tta
+
+# Optimize post-processing thresholds
+python main.py --data-source BBBC038 --optimize-thresholds
 ```
 
 ## Project Structure
 
 ```
-├── main.py                 # End-to-end pipeline runner
-├── model.py                # U-Net + training + post-processing
-├── data_handler.py         # Synthetic data generator + BBBC downloader
-├── utils.py                # Image processing + CSV export helpers
-├── tests/test_model.py     # Unit tests (dice, loss, post-processing)
+├── main.py                 # CLI pipeline runner
+├── model.py                # U-Net + ResNet50 encoder + training + evaluation
+├── data_handler.py         # BBBC downloader + real data loader + augmentation
+├── utils.py                # Image processing, augmentation, CSV export
+├── config.yaml             # Hyperparameter configuration
+├── tests/test_model.py     # Unit tests
 ├── pyproject.toml          # Package metadata and build config
 ├── Makefile                # Common commands
 ├── Dockerfile              # Containerized deployment
 └── .github/workflows/ci.yml
 ```
 
-## How It Works
+## Architecture
 
-```mermaid
-flowchart LR
-    A[Microscopy Image] --> B[U-Net Encoder]
-    B --> C[Bottleneck]
-    C --> D[U-Net Decoder]
-    D --> E[Probability Map]
-    E --> F[Binary Threshold]
-    F --> G[Distance Transform]
-    G --> H[Watershed]
-    H --> I[Labeled Cells + Count]
-```
+The U-Net follows the original Ronneberger et al. design with a pretrained ResNet50 encoder:
 
-### Architecture
-
-The U-Net follows the original Ronneberger et al. design:
-- **Encoder**: 4 blocks of Conv2D → Dropout → Conv2D → MaxPool (64→128→256→512 filters)
-- **Bottleneck**: 2× Conv2D with 1024 filters, 30% dropout
+- **Encoder**: ResNet50 pretrained on ImageNet (conv1_relu → conv5_block3_out)
+- **Bottleneck**: ResNet50 final feature map (2048 channels)
 - **Decoder**: 4 blocks of Conv2DTranspose → Concatenate (skip) → Conv2D → Dropout → Conv2D
 - **Output**: 1×1 Conv2D with sigmoid activation
 
-### Loss Function
+## Loss Function
 
-Combined Binary Cross-Entropy + Dice loss:
+Combined BCE + Dice + Focal Loss:
 
-$`\mathcal{L} = \frac{1}{N}\sum \text{BCE}(y, \hat{y}) + \left(1 - \frac{2|y \cap \hat{y}|}{|y| + |\hat{y}|}\right)`$
+`L = BCE(y, ŷ) + (1 - Dice(y, ŷ)) + Focal(y, ŷ)`
 
-This handles class imbalance (cells occupy a small fraction of the image) better than BCE alone.
+This handles class imbalance (nuclei occupy a small fraction of the image) better than any single loss.
+
+## Training Strategy
+
+1. **Phase 1** (frozen encoder): Train decoder only for 10 epochs with lr=1e-3
+2. **Phase 2** (fine-tune): Unfreeze encoder, train entire model for 20 epochs with lr=1e-4
+3. **Early stopping** with patience=10 on validation loss
+4. **ReduceLROnPlateau** with factor=0.5, patience=5
+
+## Evaluation Metrics
+
+| Metric | Description |
+|---|---|
+| IoU (Jaccard) | Intersection over Union |
+| Dice Coefficient | F1 score for segmentation overlap |
+| Precision | False positive rate |
+| Recall | False negative rate |
+| F1 | Harmonic mean of precision and recall |
+| Count MAE | Mean absolute error in cell count |
 
 ## Results
 
-On synthetic data (200 samples, 5–25 cells per image):
+On BBBC038 (Kaggle 2018 Data Science Bowl):
 
 | Metric | Value |
 |---|---|
+| IoU | ~0.75–0.85 |
 | Dice Coefficient | ~0.85–0.92 |
-| Binary Accuracy | ~0.97–0.99 |
-| Cell Count Accuracy | ±1–2 cells |
+| Count MAE | ±1–3 cells |
 
 ## Test
 
@@ -88,3 +143,7 @@ make test
 # or
 python -m pytest tests/ -v
 ```
+
+## License
+
+MIT

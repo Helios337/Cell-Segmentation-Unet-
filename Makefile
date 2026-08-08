@@ -3,6 +3,8 @@
 VENV = venv
 PYTHON = $(VENV)/bin/python
 
+PIP = $(VENV)/bin/pip
+
 # ── Install ──────────────────────────────────────────────────
 install: $(VENV)/.installed
 

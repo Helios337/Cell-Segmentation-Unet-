@@ -9,10 +9,15 @@ import zipfile
 import requests
 from tqdm import tqdm
 
-
 BBBC_URLS = {
-    "BBBC005": "https://data.broadinstitute.org/bbbc/BBBC005/BBBC005_v1_images.zip",
     "BBBC004": "https://data.broadinstitute.org/bbbc/BBBC004/BBBC004_v1_images.zip",
+    "BBBC005": "https://data.broadinstitute.org/bbbc/BBBC005/BBBC005_v1_images.zip",
+    "BBBC038": "https://data.broadinstitute.org/bbbc/BBBC038/stage1_train.zip",
+    "BBBC039": "https://data.broadinstitute.org/bbbc/BBBC039/images.zip",
+}
+
+BBBC_MASK_URLS = {
+    "BBBC039": "https://data.broadinstitute.org/bbbc/BBBC039/masks.zip",
 }
 
 
@@ -22,12 +27,12 @@ class BBBCDataLoader:
 
     Usage::
 
-        loader = BBBCDataLoader(dataset_name="BBBC005")
+        loader = BBBCDataLoader(dataset_name="BBBC038")
         loader.download_dataset(save_dir="./data")
-        X, y = loader.load_synthetic_data(n_samples=200)
+        X, y = loader.load_real_data(image_dir="./data/stage1_train")
     """
 
-    def __init__(self, dataset_name="BBBC005"):
+    def __init__(self, dataset_name="BBBC038"):
         self.dataset_name = dataset_name
 
     def download_dataset(self, save_dir="./data"):
@@ -44,31 +49,118 @@ class BBBCDataLoader:
 
         if os.path.exists(zip_path):
             print(f"{zip_filename} already downloaded at {zip_path}.")
-            return
+        else:
+            print(f"Downloading {self.dataset_name} from {zip_url} ...")
+            try:
+                response = requests.get(zip_url, stream=True, timeout=120)
+                response.raise_for_status()
+                total_size = int(response.headers.get("content-length", 0))
+                with tqdm(total=total_size, unit="B", unit_scale=True, desc=self.dataset_name) as pbar:
+                    with open(zip_path, "wb") as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                            pbar.update(len(chunk))
+                print("Download complete.")
+            except requests.exceptions.RequestException as e:
+                print(f"Download failed: {e}")
+                return
 
-        print(f"Downloading {self.dataset_name} from {zip_url} ...")
-        try:
-            response = requests.get(zip_url, stream=True, timeout=60)
-            response.raise_for_status()
-            total_size = int(response.headers.get("content-length", 0))
-            with tqdm(total=total_size, unit="B", unit_scale=True, desc=self.dataset_name) as pbar:
-                with open(zip_path, "wb") as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                        pbar.update(len(chunk))
-            print("Download complete.")
-        except requests.exceptions.RequestException as e:
-            print(f"Download failed: {e}")
-            return
-
-        print("Extracting files...")
+        print("Extracting files ...")
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(save_dir)
         print(f"Extraction complete. Files in: {save_dir}")
 
+        if self.dataset_name == "BBBC039":
+            mask_url = BBBC_MASK_URLS.get("BBBC039")
+            if mask_url:
+                mask_filename = os.path.basename(mask_url)
+                mask_path = os.path.join(save_dir, mask_filename)
+                if not os.path.exists(mask_path):
+                    print(f"Downloading masks for {self.dataset_name} ...")
+                    try:
+                        response = requests.get(mask_url, stream=True, timeout=120)
+                        response.raise_for_status()
+                        total_size = int(response.headers.get("content-length", 0))
+                        with tqdm(total=total_size, unit="B", unit_scale=True, desc="Masks") as pbar:
+                            with open(mask_path, "wb") as f:
+                                for chunk in response.iter_content(chunk_size=8192):
+                                    f.write(chunk)
+                                    pbar.update(len(chunk))
+                        print("Masks download complete.")
+                    except requests.exceptions.RequestException as e:
+                        print(f"Masks download failed: {e}")
+                if os.path.exists(mask_path):
+                    print("Extracting masks ...")
+                    with zipfile.ZipFile(mask_path, "r") as zip_ref:
+                        zip_ref.extractall(save_dir)
+                    print("Masks extraction complete.")
+
+    def load_real_data(self, image_dir, annotation_dir=None, img_size=(256, 256)):
+        """Load real BBBC images and optional annotations.
+
+        Handles both flat directory structures (BBBC039) and
+        BBBC038-style nested folders (each image in its own folder
+        with images/ and masks/ subfolders).
+
+        Args:
+            image_dir: Path to directory containing microscopy images.
+            annotation_dir: Path to directory containing ground-truth masks (optional).
+            img_size: Target image size (height, width).
+
+        Returns:
+            Tuple of (images, masks) as float32 numpy arrays normalized to [0, 1].
+        """
+        image_files = []
+        for root, dirs, files in os.walk(image_dir):
+            for f in files:
+                if f.lower().endswith((".jpg", ".png", ".tif", ".tiff")):
+                    image_files.append(os.path.join(root, f))
+        image_files = sorted(image_files)
+
+        images = []
+        masks = []
+        for img_path in tqdm(image_files, desc="Loading real images"):
+            img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+            if img is None:
+                continue
+            if len(img.shape) == 2:
+                img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+            else:
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = cv2.resize(img, img_size)
+            img = img.astype(np.float32) / 255.0
+            images.append(img)
+            if annotation_dir:
+                base_name = os.path.splitext(os.path.basename(img_path))[0]
+                mask_path = os.path.join(annotation_dir, base_name + ".png")
+                if os.path.exists(mask_path):
+                    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+                    mask = cv2.resize(mask, img_size)
+                    mask = (mask > 0).astype(np.float32)
+                else:
+                    mask_files = [
+                        f for f in os.listdir(annotation_dir)
+                        if f.lower().endswith((".png", ".jpg", ".tif", ".tiff"))
+                    ]
+                    if mask_files:
+                        combined = np.zeros(img_size, dtype=np.float32)
+                        for mf in mask_files:
+                            mp = os.path.join(annotation_dir, mf)
+                            m = cv2.imread(mp, cv2.IMREAD_GRAYSCALE)
+                            if m is not None:
+                                m = cv2.resize(m, img_size)
+                                combined = np.maximum(combined, (m > 0).astype(np.float32))
+                        mask = combined
+                    else:
+                        mask = np.zeros(img_size, dtype=np.float32)
+                masks.append(mask)
+        if annotation_dir:
+            return np.array(images), np.expand_dims(np.array(masks), axis=-1)
+        return np.array(images)
+
     def load_synthetic_data(self, n_samples=100, img_size=(256, 256)):
         """Generate synthetic cell-like images for demonstration."""
-        print(f"Generating {n_samples} synthetic cell images...")
+        print(f"Generating {n_samples} synthetic cell images ...")
         X, y = [], []
         for _ in tqdm(range(n_samples), desc="Synthetic data"):
             img = np.zeros((*img_size, 3), dtype=np.uint8)
