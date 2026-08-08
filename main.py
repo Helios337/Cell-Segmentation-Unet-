@@ -81,7 +81,6 @@ def run_training(args):
     print("\n[1/6] Building U-Net model with ResNet50 encoder ...")
     cell_tool = CellSegmentationTool(
         input_shape=tuple(args.img_size) + (3,),
-        pretrained=args.pretrained,
     )
     cell_tool.build_unet()
     cell_tool.compile_model(learning_rate=args.lr_phase1)
@@ -205,10 +204,6 @@ def main():
                         help="Learning rate for phase 1")
     parser.add_argument("--lr-phase2", type=float, default=1e-4,
                         help="Learning rate for phase 2")
-    parser.add_argument("--pretrained", action="store_true", default=True,
-                        help="Use pretrained ResNet50 encoder")
-    parser.add_argument("--no-pretrained", dest="pretrained", action="store_false",
-                        help="Use randomly initialized encoder")
     parser.add_argument("--augment", action="store_true", default=True,
                         help="Enable on-the-fly augmentation")
     parser.add_argument("--no-augment", dest="augment", action="store_false",
