@@ -112,6 +112,8 @@ class BBBCDataLoader:
         """
         image_files = []
         for root, dirs, files in os.walk(image_dir):
+            if "masks" in root.split(os.sep):
+                continue
             for f in files:
                 if f.lower().endswith((".jpg", ".png", ".tif", ".tiff")):
                     image_files.append(os.path.join(root, f))
