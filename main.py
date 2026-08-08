@@ -52,8 +52,7 @@ def load_data(args):
     if args.data_source == "BBBC038":
         data_loader.download_dataset(save_dir="./data")
         image_dir = "./data"
-        X = data_loader.load_real_data(image_dir=image_dir, img_size=tuple(args.img_size))
-        y = np.zeros((len(X), args.img_size[0], args.img_size[1], 1), dtype=np.float32)
+        X, y = data_loader.load_real_data(image_dir=image_dir, img_size=tuple(args.img_size))
         print(f"Loaded {len(X)} images from BBBC038")
         return X, y
     elif args.data_source == "BBBC039":

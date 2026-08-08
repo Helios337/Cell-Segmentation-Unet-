@@ -132,31 +132,44 @@ class BBBCDataLoader:
             img = cv2.resize(img, img_size)
             img = img.astype(np.float32) / 255.0
             images.append(img)
-            if annotation_dir:
+            mask = np.zeros(img_size, dtype=np.float32)
+            img_parent = os.path.dirname(img_path)
+            masks_dir = os.path.join(img_parent, "masks")
+            if os.path.isdir(masks_dir):
+                mask_files = [
+                    f for f in os.listdir(masks_dir)
+                    if f.lower().endswith((".png", ".jpg", ".tif", ".tiff"))
+                ]
+                for mf in mask_files:
+                    mp = os.path.join(masks_dir, mf)
+                    m = cv2.imread(mp, cv2.IMREAD_GRAYSCALE)
+                    if m is not None:
+                        m = cv2.resize(m, img_size)
+                        mask = np.maximum(mask, (m > 0).astype(np.float32))
+            elif annotation_dir:
                 base_name = os.path.splitext(os.path.basename(img_path))[0]
                 mask_path = os.path.join(annotation_dir, base_name + ".png")
                 if os.path.exists(mask_path):
-                    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-                    mask = cv2.resize(mask, img_size)
-                    mask = (mask > 0).astype(np.float32)
+                    m = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+                    if m is not None:
+                        m = cv2.resize(m, img_size)
+                        mask = (m > 0).astype(np.float32)
                 else:
                     mask_files = [
                         f for f in os.listdir(annotation_dir)
                         if f.lower().endswith((".png", ".jpg", ".tif", ".tiff"))
                     ]
-                    if mask_files:
-                        combined = np.zeros(img_size, dtype=np.float32)
-                        for mf in mask_files:
-                            mp = os.path.join(annotation_dir, mf)
-                            m = cv2.imread(mp, cv2.IMREAD_GRAYSCALE)
-                            if m is not None:
-                                m = cv2.resize(m, img_size)
-                                combined = np.maximum(combined, (m > 0).astype(np.float32))
-                        mask = combined
-                    else:
-                        mask = np.zeros(img_size, dtype=np.float32)
-                masks.append(mask)
-        if annotation_dir:
+                    for mf in mask_files:
+                        mp = os.path.join(annotation_dir, mf)
+                        m = cv2.imread(mp, cv2.IMREAD_GRAYSCALE)
+                        if m is not None:
+                            m = cv2.resize(m, img_size)
+                            mask = np.maximum(mask, (m > 0).astype(np.float32))
+            masks.append(mask)
+        if annotation_dir or any(
+            os.path.isdir(os.path.join(os.path.dirname(f), "masks"))
+            for f in image_files
+        ):
             return np.array(images), np.expand_dims(np.array(masks), axis=-1)
         return np.array(images)
 
