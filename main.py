@@ -54,6 +54,10 @@ def load_data(args):
         image_dir = "./data"
         X, y = data_loader.load_real_data(image_dir=image_dir, img_size=tuple(args.img_size))
         print(f"Loaded {len(X)} images from BBBC038")
+        print(f"  X shape: {X.shape}, y shape: {y.shape}")
+        print(f"  X range: [{X.min():.3f}, {X.max():.3f}]")
+        print(f"  y range: [{y.min():.3f}, {y.max():.3f}]")
+        print(f"  y nonzero: {(y > 0).sum()} / {y.size}")
         return X, y
     elif args.data_source == "BBBC039":
         data_loader.download_dataset(save_dir="./data")

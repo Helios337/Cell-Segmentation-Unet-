@@ -121,6 +121,7 @@ class BBBCDataLoader:
 
         images = []
         masks = []
+        masks_found = 0
         for img_path in tqdm(image_files, desc="Loading real images"):
             img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
             if img is None:
@@ -146,6 +147,8 @@ class BBBCDataLoader:
                     if m is not None:
                         m = cv2.resize(m, img_size)
                         mask = np.maximum(mask, (m > 0).astype(np.float32))
+                if mask.sum() > 0:
+                    masks_found += 1
             elif annotation_dir:
                 base_name = os.path.splitext(os.path.basename(img_path))[0]
                 mask_path = os.path.join(annotation_dir, base_name + ".png")
@@ -166,6 +169,7 @@ class BBBCDataLoader:
                             m = cv2.resize(m, img_size)
                             mask = np.maximum(mask, (m > 0).astype(np.float32))
             masks.append(mask)
+        print(f"  Masks found with nonzero pixels: {masks_found} / {len(images)}")
         if annotation_dir or any(
             os.path.isdir(os.path.join(os.path.dirname(os.path.dirname(f)), "masks"))
             for f in image_files
