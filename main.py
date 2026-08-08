@@ -201,8 +201,8 @@ def main():
                         help="Batch size")
     parser.add_argument("--lr-phase1", type=float, default=1e-3,
                         help="Learning rate for phase 1")
-    parser.add_argument("--lr-phase2", type=float, default=1e-4,
-                        help="Learning rate for phase 2")
+    parser.add_argument("--lr-phase2", type=float, default=1e-5,
+                        help="Learning rate for phase 2 (fine-tuning)")
     parser.add_argument("--augment", action="store_true", default=True,
                         help="Enable on-the-fly augmentation")
     parser.add_argument("--no-augment", dest="augment", action="store_false",

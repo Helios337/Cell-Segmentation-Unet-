@@ -9,7 +9,7 @@ training:
   epochs_phase2: 20
   batch_size: 8
   learning_rate_phase1: 0.001
-  learning_rate_phase2: 0.0001
+  learning_rate_phase2: 0.00001
   early_stopping_patience: 10
   reduce_lr_patience: 5
   reduce_lr_factor: 0.5
